@@ -1,19 +1,19 @@
-#include "WiFi.h" 
-#include "esp_camera.h"
+#include "WiFi.h" // Biblioteca para conexão Wifi
+#include "esp_camera.h"  // Biblioteca da câmera ESP32-CAM
+// Bibliotecas que permitem acessar registradores internos da ESP32, usados para desativar o sistema de proteção contra baixa tensão (brownout)
 #include "soc/soc.h"
 #include "soc/rtc_cntl_reg.h"
 
 // 📌 Configuração Wi-Fi
-
 const char* ssid = "UFRN-IoT"; // Nome da rede Wifi
 const char* password = "@IOT_UFRN-044cd9#"; // Senha da rede Wifi
 const char* server_ip = "10.13.133.242";  // IP do servidor Python
 const int server_port = 5000;   // Porta do servidor
 
-// Definições para a câmera AI-THINKER
-
+// Definições do modelo da câmera 
 #define CAMERA_MODEL_AI_THINKER // Has PSRAM
 
+// Definição dos pinos da câmera
 #define PWDN_GPIO_NUM  32
 #define RESET_GPIO_NUM -1
 #define XCLK_GPIO_NUM  0
