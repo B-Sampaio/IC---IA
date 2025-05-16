@@ -4,16 +4,16 @@
 #include "soc/soc.h"
 #include "soc/rtc_cntl_reg.h"
 
-// 📌 Configuração Wi-Fi
+//📌 Configuração Wi-Fi
 const char* ssid = "UFRN-IoT"; // Nome da rede Wifi
 const char* password = "@IOT_UFRN-044cd9#"; // Senha da rede Wifi
 const char* server_ip = "10.13.133.242";  // IP do servidor Python
 const int server_port = 5000;   // Porta do servidor
 
-// Definições do modelo da câmera 
+//📌Definições do modelo da câmera 
 #define CAMERA_MODEL_AI_THINKER // Has PSRAM
 
-// Definição dos pinos da câmera
+//📌Definição dos pinos da câmera, de acordo com o datasheet da AI-THINKER
 #define PWDN_GPIO_NUM  32
 #define RESET_GPIO_NUM -1
 #define XCLK_GPIO_NUM  0
@@ -32,11 +32,11 @@ const int server_port = 5000;   // Porta do servidor
 #define HREF_GPIO_NUM  23
 #define PCLK_GPIO_NUM  22
 
-// 4 for flash led or 33 for normal led
 #define LED_GPIO_NUM   4
 
+
 void startCamera() {
-  camera_config_t config;
+  camera_config_t config; // Estrutura de configuração da câmera
   config.ledc_channel = LEDC_CHANNEL_0;
   config.ledc_timer = LEDC_TIMER_0;
   config.pin_d0 = Y2_GPIO_NUM;
@@ -56,38 +56,26 @@ void startCamera() {
   config.pin_pwdn = PWDN_GPIO_NUM;
   config.pin_reset = RESET_GPIO_NUM;
   config.xclk_freq_hz = 20000000;
-  config.frame_size = FRAMESIZE_UXGA;
-  config.pixel_format = PIXFORMAT_JPEG;  // for streaming
-  //config.pixel_format = PIXFORMAT_RGB565; // for face detection/recognition
+  config.frame_size = FRAMESIZE_UXGA; // Resolução da imagem (UXGA = 1600x1200)
+  config.pixel_format = PIXFORMAT_JPEG; // Formato da imagem (JPEG, ideal para envio por rede)
   config.grab_mode = CAMERA_GRAB_WHEN_EMPTY;
   config.fb_location = CAMERA_FB_IN_PSRAM;
   config.jpeg_quality = 12;
   config.fb_count = 1;
 
    if (config.pixel_format == PIXFORMAT_JPEG) {
-    if (psramFound()) {
+    // Se PSRAM está disponível, aumenta a qualidade da imagem e usa buffer duplo
+    if (psramFound()) {  
       config.jpeg_quality = 10;
       config.fb_count = 2;
       config.grab_mode = CAMERA_GRAB_LATEST;
     } else {
-      // Limit the frame size when PSRAM is not available
+      // Se PSRAM não disponível, reduz qualidade e resolução
       config.frame_size = FRAMESIZE_SVGA;
       config.fb_location = CAMERA_FB_IN_DRAM;
     }
-  } else {
-    // Best option for face detection/recognition
-    config.frame_size = FRAMESIZE_240X240;
-#if CONFIG_IDF_TARGET_ESP32S3
-    config.fb_count = 2;
-#endif
-  }
-
-#if defined(CAMERA_MODEL_ESP_EYE)
-  pinMode(13, INPUT_PULLUP);
-  pinMode(14, INPUT_PULLUP);
-#endif
-  
-
+   
+// Inicializa a câmera e verifica se houve erro
   esp_err_t err = esp_camera_init(&config);
   if (err != ESP_OK) {
     Serial.println("❌ Falha na inicialização da câmera");
@@ -98,23 +86,27 @@ void startCamera() {
 }
 
 
-
+// 📌 Função setup: executada uma vez ao ligar
 void setup() {
-  Serial.begin(115200);
-  WiFi.begin(ssid, password);
-  
+  Serial.begin(115200); // Inicia comunicação serial
+  WiFi.begin(ssid, password); // Conecta ao Wi-Fi
+
+  // Aguarda conexão com Wi-Fi
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
   }
   Serial.println("\nWiFi Conectado!");
   server.begin();
-  startCamera();
+  startCamera(); // Inicializa a câmera
   sendPhoto();  // Enviar foto ao conectar
 }
 
+// 📌 Função que captura e envia a foto para o servidor
 void sendPhoto() {
+  
   WiFiClient client = server.available();
+  // Conecta ao servidor Python via IP e porta
   if (!client.connect(server_ip, server_port)) {
     Serial.println("❌ Falha na conexão com o servidor");
     return;
@@ -123,7 +115,8 @@ void sendPhoto() {
   Serial.println("✅ Conectado ao servidor!");
   Serial.print("Endereço IP: ");
   Serial.println(WiFi.localIP());
-
+  
+//Captura uma imagem da câmera
   camera_fb_t *fb = esp_camera_fb_get();
   if (!fb) {
     Serial.println("❌ Falha ao capturar imagem");
@@ -132,18 +125,17 @@ void sendPhoto() {
   Serial.println("📸 Imagem capturada com sucesso!");
 }
 
-  // 📌 Enviar tamanho da imagem primeiro
+  //Enviar tamanho da imagem primeiro
 
   client.write((const uint8_t*)&fb->len, sizeof(fb->len));
 
-
-//  Serial.println(" tamanho da imagem: "+(const char)((const uint8_t*)&fb->len, sizeof(fb->len)));
   Serial.print(" tamanho da imagem: ");
   Serial.println(sizeof(fb->len));
   
-  // 📌 Enviar os bytes da imagem
+  //Enviar os bytes da imagem
   client.write(fb->buf, fb->len);
-
+  
+  // Recebe resposta do servidor
   String response = "";
   while (client.connected()) {
     if (client.available()){
@@ -152,16 +144,16 @@ void sendPhoto() {
     }
     Serial.println("Nada a receber");
   }
-  //Serial.println("");
   Serial.println("Resposta do servidor: " + response);
-  delay(500);
-  esp_camera_fb_return(fb);
-  client.stop();
+  delay(500); // Pausa
+  esp_camera_fb_return(fb); // Libera a memória do frame
+  client.stop(); // Encerra conexão
   Serial.println("📸 Imagem enviada com sucesso!");
   
 
 }
 
+// 📌 Loop principal: a cada 10 segundos envia uma nova imagem
 void loop() {
   delay(10000); // A cada 10 segundos, enviar uma nova imagem
   sendPhoto();
