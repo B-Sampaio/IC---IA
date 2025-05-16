@@ -1,16 +1,17 @@
-#include "WiFi.h"
+#include "WiFi.h" 
 #include "esp_camera.h"
 #include "soc/soc.h"
 #include "soc/rtc_cntl_reg.h"
-#include "FS.h"
 
 // 📌 Configuração Wi-Fi
-const char* ssid = "UFRN-IoT";
-const char* password = "@IOT_UFRN-044cd9#";
+
+const char* ssid = "UFRN-IoT"; // Nome da rede Wifi
+const char* password = "@IOT_UFRN-044cd9#"; // Senha da rede Wifi
 const char* server_ip = "10.13.133.242";  // IP do servidor Python
-const int server_port = 5000;
-WiFiServer server(server_port);
+const int server_port = 5000;   // Porta do servidor
+
 // Definições para a câmera AI-THINKER
+
 #define CAMERA_MODEL_AI_THINKER // Has PSRAM
 
 #define PWDN_GPIO_NUM  32
