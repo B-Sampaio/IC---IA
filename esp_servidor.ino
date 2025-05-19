@@ -34,6 +34,9 @@ const int server_port = 5000;   // Porta do servidor
 
 #define LED_GPIO_NUM   4
 
+// Definicao de pinos digitais dos leds
+#define VERDE_LED_GPIO 16
+#define VERMELHO_LED_GPIO 12
 
 void startCamera() {
   camera_config_t config; // Estrutura de configuração da câmera
@@ -100,6 +103,15 @@ void setup() {
   server.begin();
   startCamera(); // Inicializa a câmera
   sendPhoto();  // Enviar foto ao conectar
+  
+  // pinMode é o comando que utiliza para definir se determinado tipo de componente é entrada ou saída de dados
+  pinMode(VERDE_LED_GPIO, OUTPUT);
+  pinMode(VERMELHO_LED_GPIO, OUTPUT);
+  
+  // Estado inicial: vermelho ligado
+ //digitalWrite é comando que você utiliza para ligar e desligar o led. Basicamente segue essa estrutrua: digitalWrite(led, valor). Esse valor pode ser ligado = HIGH = 1 ou desligado = LOW = 0
+ digitalWrite(VERDE_LED_GPIO, LOW); // Desligado 
+ digitalWrite(VERMELHO_LED_GPIO, HIGH);    // Ligado 
 }
 
 // 📌 Função que captura e envia a foto para o servidor
@@ -145,6 +157,17 @@ void sendPhoto() {
     Serial.println("Nada a receber");
   }
   Serial.println("Resposta do servidor: " + response);
+
+  if (response == "1.0") {
+   Serial.println("✅ Ferramental e peça são reconhecidos — LED verde ligado!");
+   digitalWrite(VERDE_LED_GPIO, HIGH;   // Liga verde 
+   digitalWrite(VERMELHO_LED_GPIO, LOW);    // Desliga vermelho
+  }else {
+   Serial.println("❌ Ferramental e peça NÃO reconhecidos — LED vermelho ligado!");
+   digitalWrite(VERDE_LED_GPIO, LOW);  // Desliga verde
+   digitalWrite(VERMELHO_LED_GPIO, HIGH);     // Liga vermelho
+  }
+    
   delay(500); // Pausa
   esp_camera_fb_return(fb); // Libera a memória do frame
   client.stop(); // Encerra conexão
