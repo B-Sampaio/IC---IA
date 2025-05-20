@@ -5,8 +5,8 @@
 #include "soc/rtc_cntl_reg.h"
 
 //📌 Configuração Wi-Fi
-const char* ssid = "UFRN-IoT"; // Nome da rede Wifi
-const char* password = "@IOT_UFRN-044cd9#"; // Senha da rede Wifi
+const char* ssid = "*********"; // Nome da rede Wifi (Credenciais particulares)
+const char* password = "***********"; // Senha da rede Wifi (Credenciais particulares)
 const char* server_ip = "10.13.133.242";  // IP do servidor Python
 const int server_port = 5000;   // Porta do servidor
 
